@@ -1,0 +1,17 @@
+stages:
+  - test
+
+lint-code:
+  stage: test
+  image: clojure:tools-deps-alpine
+  when: always
+  script:
+    - clojure -A:kibit
+    - clojure -A:eastwood
+
+unit-tests:
+  stage: test
+  image: clojure:tools-deps-alpine
+  when: always
+  script:
+    - clojure -A:test
