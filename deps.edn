@@ -1,9 +1,10 @@
-{:deps    {org.clojure/clojure       {:mvn/version "1.10.0"}
-           cheshire/cheshire         {:mvn/version "5.8.1"}
-           http-kit/http-kit         {:mvn/version "2.3.0"}
-           org.jwat/jwat-warc        {:mvn/version "1.1.1"}
-           warc-clojure/warc-clojure {:mvn/version "0.2.6"}
-           org.clojure/tools.logging {:mvn/version "0.4.1"}}
+{:deps    {org.clojure/clojure            {:mvn/version "1.10.0"}
+           cheshire/cheshire              {:mvn/version "5.8.1"}
+           http-kit/http-kit              {:mvn/version "2.3.0"}
+           org.jwat/jwat-warc             {:mvn/version "1.1.1"}
+           warc-clojure/warc-clojure      {:mvn/version "0.2.6"}
+           org.clojure/tools.logging      {:mvn/version "0.4.1"}
+           ch.qos.logback/logback-classic {:mvn/version "1.2.3"}}
  :paths   ["src" "resources"]
  :aliases {:test     {:extra-paths ["test"]
                       :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
