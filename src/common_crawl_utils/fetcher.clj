@@ -41,8 +41,12 @@
 
 (defn fetch-coordinates [query cdx-api]
   (->> (get-number-of-pages query cdx-api)
+       (log/spyf :info "Number of pages to fetch `%s`")
        (range)
-       (mapcat #(submit-query (assoc query :page %) cdx-api))))
+       (mapcat (fn [page-nr]
+                 (let [fetched-coordinates-page (submit-query (assoc query :page page-nr) cdx-api)]
+                   (log/infof "Coordinates for query `%s` fetched page nr `%s`" query (inc page-nr))
+                   fetched-coordinates-page)))))
 
 (defn- get-range-header [{:keys [offset length]}]
   (let [offset (Integer/parseInt offset)
