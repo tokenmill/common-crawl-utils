@@ -9,9 +9,9 @@ lint-code:
     - clojure -A:kibit
     - clojure -A:eastwood
 
-unit-tests:
+integration-tests:
   stage: test
   image: clojure:tools-deps-alpine
   when: always
   script:
-    - clojure -A:test
+    - clojure -A:test -i integration
