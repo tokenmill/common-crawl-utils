@@ -1,9 +1,8 @@
-(ns common-crawl-utils.fetcher-test
+(ns common-crawl-utils.coordinates-test
   (:require [clojure.test :refer :all]
-            [clojure.string :as str]
-            [common-crawl-utils.fetcher :as fetcher]))
+            [common-crawl-utils.coordinates :as coordinates]))
 
-(deftest ^:integration fetcher-test
+(deftest ^:integration coordinates-test
   (let [cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"
         query-1 {:url "tokenmill.lt" :filter ["digest:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS"]}
         coordinate-1 {:offset        "272838009",
@@ -18,10 +17,15 @@
                       :length        "8548",
                       :languages     "eng",
                       :timestamp     "20190217125141"}]
-    (testing "Fetching single coordinate content"
-      (are [query coordinates] (let [response (fetcher/fetch-content query cdx-api)]
-                                 (and (= coordinates (map #(dissoc % :content) response))
-                                      (every? #(not (str/blank? (-> % (get :content) (vals) (str/join "\r\n\r\n")))) response)))
-                               query-1 [coordinate-1]))
-    (testing "Fetching content"
-      (is (pos-int? (count (fetcher/fetch-content query-1 cdx-api)))))))
+    (testing "Query submission"
+      (are [query response] (= response (coordinates/submit-query cdx-api query))
+                            query-1 [coordinate-1]))
+    (testing "Page counting"
+      (are [query response] (= response (coordinates/get-number-of-pages cdx-api query))
+                            {:url "tokenmill.lt/*"} 1
+                            {:url "-"} 0))
+    (testing "Coordinate fetching"
+      (are [query response] (= response (coordinates/fetch query cdx-api))
+                            query-1 [coordinate-1]))
+    (testing "Fething single coordinate for multi page result"
+      (is (some? (first (coordinates/fetch {:url "delfi.lt" :matchType "host"} cdx-api)))))))
