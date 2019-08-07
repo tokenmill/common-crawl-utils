@@ -1,52 +1,11 @@
 (ns common-crawl-utils.fetcher
-  (:require [clojure.string :as str]
-            [org.httpkit.client :as http]
-            [cheshire.core :as json]
+  (:require [clojure.tools.logging :as log]
             [common-crawl-utils.constants :as constants]
-            [clojure.tools.logging :as log])
-  (:import (java.util.zip GZIPInputStream)
-           (java.io ByteArrayInputStream)
-           (java.util Scanner)))
-
-(defn- parse-query-response [body]
-  (if (= -1 (.indexOf body "\"error\": \"No Captures found for"))
-    (->> body
-         (str/split-lines)
-         (map #(json/parse-string % true)))
-    []))
-
-(defn submit-query [query cdx-api & {:keys [retry-count result-promise] :or {retry-count 0 result-promise (promise)}}]
-  (http/request {:url          cdx-api
-                 :method       :get
-                 :query-params (assoc query :output "json" :pageSize 1)}
-                (fn [{:keys [body error]}]
-                  (try
-                    (if error
-                      (throw error)
-                      (deliver result-promise (parse-query-response body)))
-                    (catch Exception e
-                      (if (> 3 retry-count)
-                        (submit-query query cdx-api :retry-count (inc retry-count) :result-promise result-promise)
-                        (do
-                          (deliver result-promise [])
-                          (log/errorf "Error submitting query %s to '%s': %s" query cdx-api (Throwable->map e))))))))
-  @result-promise)
-
-(defn get-number-of-pages [query cdx-api]
-  (-> query
-      (assoc :showNumPages true)
-      (submit-query cdx-api)
-      (first)
-      (get :pages)))
-
-(defn fetch-coordinates [query cdx-api]
-  (->> (get-number-of-pages query cdx-api)
-       (log/spyf :info "Number of pages to fetch `%s`")
-       (range)
-       (mapcat (fn [page-nr]
-                 (let [fetched-coordinates-page (submit-query (assoc query :page page-nr) cdx-api)]
-                   (log/infof "Coordinates for query `%s` fetched page nr `%s`" query (inc page-nr))
-                   fetched-coordinates-page)))))
+            [common-crawl-utils.coordinates :as coordinates]
+            [org.httpkit.client :as http])
+  (:import (java.io ByteArrayInputStream)
+           (java.util Scanner)
+           (java.util.zip GZIPInputStream)))
 
 (defn- get-range-header [{:keys [offset length]}]
   (let [offset (Integer/parseInt offset)
@@ -65,23 +24,44 @@
                  :headers {"range" (get-range-header coordinate)}
                  :as      :byte-array
                  :timeout 5000}
-                (fn [{:keys [body error]}]
-                  (try
-                    (if error
-                      (throw error)
-                      (deliver result-promise (callback (assoc coordinate :content (read-content body)))))
-                    (catch Exception e
-                      (if (> 3 retry-count)
-                        (fetch-single-coordinate-content coordinate :callback callback :retry-count (inc retry-count) :result-promise result-promise)
-                        (do
-                          (deliver result-promise (assoc coordinate :error e))
-                          (log/errorf "Error fetching coordinate '%s' content: %s" coordinate (Throwable->map e))))))))
+                (fn [{:keys [body error status]}]
+                  (cond
+                    (some? error) (if (pos-int? retry-count)
+                                    (fetch-single-coordinate-content coordinate callback (dec retry-count) result-promise)
+                                    (do
+                                      (log/errorf "Error fetching content for coordinate `%s`: %s" coordinate error)
+                                      (deliver result-promise (assoc coordinate :error (str error)))))
+                    (not= status 206) (if (pos-int? retry-count)
+                                        (fetch-single-coordinate-content coordinate callback (dec retry-count) result-promise)
+                                        (do
+                                          (log/errorf "Content fetch HTTP request for coordinate `%s` failed with status `%s`" coordinate status)
+                                          (deliver result-promise (assoc coordinate :error (format "HTTP status `%s`: `%s`" status body)))))
+                    :else (->> body (read-content) (assoc coordinate :content) (callback) (deliver result-promise)))))
   result-promise)
 
-(defn fetch-content [query & {:keys [cdx-api callback portion-size] :or {cdx-api (get constants/most-recent-crawl :cdx-api) portion-size 1000}}]
-  (let [coordinates (fetch-coordinates query cdx-api)]
-    (if callback
-      (future
-        (doseq [coordinate-portion (partition-all portion-size coordinates)]
-          (run! deref (doall (map #(fetch-single-coordinate-content % :callback callback) coordinate-portion)))))
-      (map (comp deref fetch-single-coordinate-content) coordinates))))
+(defn fetch-content
+  "Fetches coordinates from Common Crawl Index Server along with their content from AWS
+
+  Takes `query` map, which is described in https://github.com/webrecorder/pywb/wiki/CDX-Server-API#api-reference
+  and, optionally, `cdx-api` endpoint from https://index.commoncrawl.org/collinfo.json
+  as well as `callback` function, which will be executed on fetched coordinate asynchronously
+
+  ;; To fetch all content for host from most recent crawl
+  (fetch-content {:url \"http://www.cnn.com\" :matchType \"host\"})
+
+  ;; To fetch limited number of coordinates with content
+  (take 10 (fetch-content {:url \"http://www.cnn.com\" :matchType \"host\"}))
+
+  ;; Provide callback function
+  (fetch-content {:url \"http://www.cnn.com\" :matchType \"host\"}
+                 (:cdx-api (common-crawl-utils.coordinates/get-most-recent-crawl))
+                 callback-function)"
+  ([query]
+   (fetch-content query (:cdx-api (coordinates/get-most-recent-crawl))))
+  ([query cdx-api]
+   (let [coordinates (coordinates/fetch query cdx-api)]
+     (map #(if (:error %) % @(fetch-single-coordinate-content %)) coordinates)))
+  ([query cdx-api callback]
+   (future
+     (doseq [coordinate-portion (->> (coordinates/fetch query cdx-api) (remove :error) (partition-all 1000))]
+       (run! deref (doall (map #(fetch-single-coordinate-content % :callback callback) coordinate-portion)))))))

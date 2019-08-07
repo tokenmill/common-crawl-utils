@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [common-crawl-utils.reader :as reader]))
 
-(deftest reader-test
+(deftest ^:integration reader-test
   (testing "Warc reading"
     (is (some some? (reader/read-warc))))
   (testing "Coordinate reading"

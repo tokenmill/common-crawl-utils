@@ -3,9 +3,7 @@
 ## Fetcher
 
 ```
-(require '[common-crawl-utils.fetcher :as fetcher])
-
-(fetcher/fetch-content {:url "tokenmill.lt"}))
+(common-crawl-utils.fetcher/fetch-content {:url "tokenmill.lt"})
 ```
 
 Uses [Common Crawl Index API](https://index.commoncrawl.org/) to get
@@ -44,8 +42,7 @@ Common Crawl is updated on a monthly basis. Each crawl has a specific
 index API, which we can query like this:
 
 ```
-(let [query {:url "tokenmill.lt" :filter ["status:200"]}]
- (fetcher/fetch-coordinates query "https://index.commoncrawl.org/CC-MAIN-2019-09-index"))
+(common-crawl-utils.coordinates/fetch {:url "tokenmill.lt" :filter ["status:200"]} "https://index.commoncrawl.org/CC-MAIN-2019-09-index")
 =>
 ({:offset "272838009",
  :digest "U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS",
@@ -62,8 +59,8 @@ index API, which we can query like this:
 ```
 
 When "cdx-api" keyword argument is not specified, most recent one is
-used. Currently available index collections are defined as
-"*common-crawl-utils.constants/crawls*" or can be found at:
+used. Currently available index collections can be accessed with
+"*common-crawl-utils.coordinates/get-crawls*" or can be found at:
 https://index.commoncrawl.org/collinfo.json
 
 ### Content
@@ -71,8 +68,7 @@ https://index.commoncrawl.org/collinfo.json
 To fetch content for single coordinate:
 
 ```
-(let [coordinate {:offset "272838009" :length "8548" :filename "crawl-data/CC-MAIN-2019-09/segments/1550247481992.39/warc/CC-MAIN-20190217111746-20190217133746-00381.warc.gz"}]
- @(fetcher/fetch-content-for-single-coordinate coordinate))
+@(common-crawl-utils.fetcher/fetch-single-coordinate-content {:offset "272838009" :length "8548" :filename "crawl-data/CC-MAIN-2019-09/segments/1550247481992.39/warc/CC-MAIN-20190217111746-20190217133746-00381.warc.gz"})
 =>
 {:offset "272838009",
  :length "8548",
@@ -110,8 +106,7 @@ Both single and bulk content fetching functions accept "callback"
 keyword argument.
 
 ```
-(let [cdx-api "https://index.commoncrawl.org/CC-MAIN-2019-09-index"]
- (fetcher/fetch-content {:url "tokenmill.lt" :filter ["status:200"]} :callback #(println (get-in % [:content :html])) :cdx-api cdx-api)
+(fetcher/fetch-content {:url "tokenmill.lt" :filter ["status:200"]} "https://index.commoncrawl.org/CC-MAIN-2019-09-index" #(println (get-in % [:content :html])))
 => nil
 <!DOCTYPE html>
 ...
@@ -124,11 +119,9 @@ Can directly read Common Crawl .warc files containing content, as well
 as .cdx files containing coordinates.
 
 ```
-(require '[common-crawl-utils.reader :as reader])
+(common-crawl-utils.reader/read-warc)
 
-(reader/read-warc)
-
-(reader/read-cdx)
+(common-crawl-utils.reader/read-coordinates)
 ```
 
 If no arguments are specified, reads from latest crawl. Otherwise, we
@@ -136,7 +129,7 @@ can specify crawl "id" which can be found at
 https://index.commoncrawl.org/collinfo.json.
 
 ```
-(first (reader/read-warc "CC-MAIN-2019-09"))
+(first (common-crawl-utils.reader/read-warc "CC-MAIN-2019-09"))
 =>
 {:content-length 61992,
   :content-type #object[org.jwat.common.ContentType 0x3eb133dd "application/http; msgtype=response"],
