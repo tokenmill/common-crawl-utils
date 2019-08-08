@@ -16,7 +16,7 @@
                  :query-params (assoc query :output "json")}
                 (fn [{:keys [body error status]}]
                   (cond
-                    (= status 404) []
+                    (= status 404) (deliver result-promise [])
                     (some? error) (if (pos-int? retry-count)
                                     (submit-query cdx-api query (dec retry-count) result-promise)
                                     (do
