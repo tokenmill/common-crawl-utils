@@ -21,16 +21,16 @@
                                     (submit-query cdx-api query (dec retry-count) result-promise)
                                     (do
                                       (log/errorf "Error submitting query `%s` to `%s`: `%s`" query cdx-api error)
-                                      (deliver result-promise {:cdx-api cdx-api
-                                                               :query   query
-                                                               :error   (str error)})))
+                                      (deliver result-promise [{:cdx-api cdx-api
+                                                                :query   query
+                                                                :error   (str error)}])))
                     (not= status 200) (if (pos-int? retry-count)
                                         (submit-query cdx-api query (dec retry-count) result-promise)
                                         (do
                                           (log/errorf "HTTP request for query `%s` to `%s` failed with status `%s`" query cdx-api status)
-                                          (deliver result-promise {:cdx-api cdx-api
-                                                                   :query   query
-                                                                   :error   (format "HTTP status `%s`: `%s`" status body)})))
+                                          (deliver result-promise [{:cdx-api cdx-api
+                                                                    :query   query
+                                                                    :error   (format "HTTP status `%s`: `%s`" status body)}])))
                     :else (deliver result-promise (utils/read-jsonl body)))))
   @result-promise)
 
