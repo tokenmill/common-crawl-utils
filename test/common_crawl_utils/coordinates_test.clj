@@ -3,8 +3,12 @@
             [common-crawl-utils.coordinates :as coordinates]))
 
 (deftest ^:integration coordinates-test
-  (let [cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"
-        query-1 {:url "tokenmill.lt" :filter ["digest:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS"]}
+  (let [query-1 {:url     "tokenmill.lt"
+                 :filter  ["digest:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS"]
+                 :cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"}
+        query-2 {:url       "delfi.lt"
+                 :matchType "host"
+                 :cdx-api   "http://index.commoncrawl.org/CC-MAIN-2019-09-index"}
         coordinate-1 {:offset        "272838009",
                       :digest        "U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS",
                       :mime          "text/html",
@@ -18,14 +22,15 @@
                       :languages     "eng",
                       :timestamp     "20190217125141"}]
     (testing "Query submission"
-      (are [query response] (= response (coordinates/submit-query cdx-api query))
-                            query-1 [coordinate-1]))
+      (is (= [coordinate-1] (coordinates/call-cdx-api query-1))))
     (testing "Page counting"
-      (are [query response] (= response (coordinates/get-number-of-pages cdx-api query))
-                            {:url "tokenmill.lt/*"} 1
-                            {:url "-"} 0))
+      (is (= 1 (:pages (coordinates/get-total-pages
+                         {:url     "tokenmill.lt/*"
+                          :cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"}))))
+      (is (= 0 (:pages (coordinates/get-total-pages
+                         {:url     "-"
+                          :cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"})))))
     (testing "Coordinate fetching"
-      (are [query response] (= response (coordinates/fetch query cdx-api))
-                            query-1 [coordinate-1]))
+      (is (= [coordinate-1] (coordinates/fetch query-1))))
     (testing "Fething single coordinate for multi page result"
-      (is (some? (first (coordinates/fetch {:url "delfi.lt" :matchType "host"} cdx-api)))))))
+      (is (some? (first (coordinates/fetch query-2)))))))
