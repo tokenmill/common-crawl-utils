@@ -1,6 +1,7 @@
 (ns common-crawl-utils.coordinates
-  (:require [common-crawl-utils.constants :as constants]
+  (:require [clojure.core.async :refer [>!! chan close! thread]]
             [clojure.tools.logging :as log]
+            [common-crawl-utils.constants :as constants]
             [common-crawl-utils.utils :as utils]
             [org.httpkit.client :as http]))
 
@@ -65,3 +66,16 @@
         (some? error) (vector validated-query)
         (< page pages) (concat (call-cdx-api validated-query)
                                (fetch (update validated-query :page inc)))))))
+
+(defn fetch-async
+  [{:keys [coordinate-chan limit close?]
+    :as   query
+    :or   {coordinate-chan (chan)
+           close?          true}}]
+  (thread
+    (doseq [coordinate (cond->> (fetch query) (some? limit) (take limit))]
+      (>!! coordinate-chan coordinate))
+    (when close?
+      (close! coordinate-chan)
+      (log/debugf "Closed coordinate channel for query `%s`" (select-keys query cdx-params))))
+  coordinate-chan)

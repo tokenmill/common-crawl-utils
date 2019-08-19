@@ -1,5 +1,7 @@
 (ns common-crawl-utils.fetcher
-  (:require [common-crawl-utils.constants :as constants]
+  (:require [clojure.core.async :refer [<!! >! chan close! go thread]]
+            [clojure.tools.logging :as log]
+            [common-crawl-utils.constants :as constants]
             [common-crawl-utils.coordinates :as coordinates]
             [common-crawl-utils.utils :as utils]
             [org.httpkit.client :as http])
@@ -47,3 +49,21 @@
   (map (fn [{error :error :as coordinate}]
          (cond->> coordinate (nil? error) (fetch-single-coordinate-content)))
        (coordinates/fetch query)))
+
+(defn fetch-content-async
+  [{:keys [coordinate-chan content-chan close?]
+    :as   query
+    :or   {coordinate-chan (chan)
+           content-chan    (chan)
+           close?          true}}]
+  (let [coordinate-chan (coordinates/fetch-async (assoc query :coordinate-chan coordinate-chan :close? close?))]
+    (thread
+      (loop []
+        (when-let [{error :error :as coordinate} (<!! coordinate-chan)]
+          (go
+            (>! content-chan (cond->> coordinate (nil? error) (fetch-single-coordinate-content))))
+          (recur)))
+      (when close?
+        (close! content-chan)
+        (log/debugf "Closed content channel for query `%s`" (select-keys query coordinates/cdx-params))))
+    content-chan))
