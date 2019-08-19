@@ -2,7 +2,7 @@
   (:require [cheshire.core :as json]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
+            [common-crawl-utils.constants :as constants]
             [org.httpkit.client :as http]
             [warc-clojure.core :as warc])
   (:import (java.io InputStreamReader BufferedReader)
@@ -32,3 +32,19 @@
 (defn read-jsonl [s]
   (map #(json/parse-string % true)
        (str/split-lines s)))
+
+(defn get-crawls
+  ([]
+   (get-crawls constants/index-collinfo))
+  ([index-collinfo]
+   (let [{:keys [body error] :as response}
+         (request-json index-collinfo)]
+     (if (some? error)
+       (vector response)
+       body))))
+
+(defn get-most-recent-crawl
+  ([]
+   (get-most-recent-crawl constants/index-collinfo))
+  ([index-collinfo]
+   (first (get-crawls index-collinfo))))
