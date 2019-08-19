@@ -4,8 +4,9 @@
             [common-crawl-utils.fetcher :as fetcher]))
 
 (deftest ^:integration fetcher-test
-  (let [cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"
-        query-1 {:url "tokenmill.lt" :filter ["digest:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS"]}
+  (let [query-1 {:url     "tokenmill.lt"
+                 :filter  ["digest:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS"]
+                 :cdx-api "http://index.commoncrawl.org/CC-MAIN-2019-09-index"}
         coordinate-1 {:offset        "272838009",
                       :digest        "U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS",
                       :mime          "text/html",
@@ -19,9 +20,9 @@
                       :languages     "eng",
                       :timestamp     "20190217125141"}]
     (testing "Fetching single coordinate content"
-      (are [query coordinates] (let [response (fetcher/fetch-content query cdx-api)]
+      (are [query coordinates] (let [response (fetcher/fetch-content query)]
                                  (and (= coordinates (map #(dissoc % :content) response))
                                       (every? #(not (str/blank? (-> % (get :content) (vals) (str/join "\r\n\r\n")))) response)))
                                query-1 [coordinate-1]))
     (testing "Fetching content"
-      (is (pos-int? (count (fetcher/fetch-content query-1 cdx-api)))))))
+      (is (pos-int? (count (fetcher/fetch-content query-1)))))))

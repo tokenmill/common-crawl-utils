@@ -2,7 +2,6 @@
   (:require [cheshire.core :as json]
             [clojure.string :as str]
             [common-crawl-utils.constants :as constants]
-            [common-crawl-utils.coordinates :as coordinates]
             [common-crawl-utils.utils :as utils]))
 
 (defn get-urls [path]
@@ -13,7 +12,7 @@
   (get-urls (format "crawl-data/%s/warc.paths.gz" id)))
 
 (defn read-warc
-  ([] (read-warc (:id (coordinates/get-most-recent-crawl))))
+  ([] (read-warc (:id (utils/get-most-recent-crawl))))
   ([id] (->> id (get-warc-urls) (mapcat utils/warc-record-seq))))
 
 (defn get-cdx-urls [id]
@@ -27,5 +26,5 @@
                :urlkey urlkey))))
 
 (defn read-coordinates
-  ([] (read-coordinates (:id (coordinates/get-most-recent-crawl))))
+  ([] (read-coordinates (:id (utils/get-most-recent-crawl))))
   ([id] (->> id (get-cdx-urls) (mapcat utils/gzip-line-seq) (map parse-coordinate))))
