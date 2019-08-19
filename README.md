@@ -42,7 +42,7 @@ Common Crawl is updated on a monthly basis. Each crawl has a specific
 index API, which we can query like this:
 
 ```
-(common-crawl-utils.coordinates/fetch {:url "tokenmill.lt" :filter ["status:200"]} "https://index.commoncrawl.org/CC-MAIN-2019-09-index")
+(common-crawl-utils.coordinates/fetch {:cdx-api "https://index.commoncrawl.org/CC-MAIN-2019-09-index" :url "tokenmill.lt" :filter ["status:200"]})
 =>
 ({:offset "272838009",
  :digest "U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS",
@@ -58,9 +58,9 @@ index API, which we can query like this:
  :timestamp "20190217125141"})
 ```
 
-When "cdx-api" keyword argument is not specified, most recent one is
+When "cdx-api" keyword is not specified, most recent one is
 used. Currently available index collections can be accessed with
-"*common-crawl-utils.coordinates/get-crawls*" or can be found at:
+"*common-crawl-utils.utils/get-crawls*" or can be found at:
 https://index.commoncrawl.org/collinfo.json
 
 ### Content
@@ -100,17 +100,6 @@ To fetch coordinates along with their content:
 
 ```
 (fetcher/fetch-content {:url "tokenmill.lt" :filter ["status:200"]})
-```
-
-Both single and bulk content fetching functions accept "callback"
-keyword argument.
-
-```
-(fetcher/fetch-content {:url "tokenmill.lt" :filter ["status:200"]} "https://index.commoncrawl.org/CC-MAIN-2019-09-index" #(println (get-in % [:content :html])))
-=> nil
-<!DOCTYPE html>
-...
-</html>
 ```
 
 ## Reader
