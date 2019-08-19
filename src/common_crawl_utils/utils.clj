@@ -7,6 +7,7 @@
             [warc-clojure.core :as warc])
   (:import (java.io InputStreamReader BufferedReader)
            (java.util.zip GZIPInputStream)
+           (java.time Instant)
            (org.jwat.warc WarcReaderFactory)))
 
 (defn gzip-line-seq [path]
@@ -23,11 +24,20 @@
       (WarcReaderFactory/getReader)
       (warc/get-response-records-seq)))
 
+(defn get-http-error [{:keys [body error status]}]
+  {:message   (or (some-> error (Throwable->map) (get-in [:via 0 :message]))
+                  (format "HTTP status %s: `%s`" status body))
+   :timestamp (str (Instant/now))})
+
 (defn request-json [url]
-  @(http/request {:url url :method :get}
-                 (fn [{:keys [status body]}]
-                   (when (= status 200)
-                     (json/decode body true)))))
+  @(http/request {:url     url
+                  :method  :get
+                  :timeout constants/http-timeout}
+                 (fn [{:keys [error status] :as response}]
+                   (cond-> response
+                           (= 200 (:status response)) (update :body #(json/decode % true))
+                           (or (some? error)
+                               (not= status 200)) (update :error (get-http-error response))))))
 
 (defn read-jsonl [s]
   (map #(json/parse-string % true)
