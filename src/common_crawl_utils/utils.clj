@@ -25,7 +25,7 @@
       (warc/get-response-records-seq)))
 
 (defn get-http-error [{:keys [body error status]}]
-  {:message   (or (some-> error (Throwable->map) (get-in [:via 0 :message]))
+  {:message   (or (when error (.getMessage ^Throwable error))
                   (format "HTTP status %s: `%s`" status body))
    :timestamp (str (Instant/now))})
 
@@ -37,7 +37,7 @@
                    (cond-> response
                            (= 200 (:status response)) (update :body #(json/decode % true))
                            (or (some? error)
-                               (not= status 200)) (update :error (get-http-error response))))))
+                               (not= status 200)) (assoc :error (get-http-error response))))))
 
 (defn read-jsonl [s]
   (map #(json/parse-string % true)

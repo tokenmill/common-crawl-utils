@@ -62,8 +62,8 @@
   (lazy-seq
     (let [{:keys [page pages error] :as validated-query} (validate-query query)]
       (cond
-        (zero? pages) (vector)
         (some? error) (vector validated-query)
+        (zero? pages) (vector)
         (< page pages) (concat (call-cdx-api validated-query)
                                (fetch (update validated-query :page inc)))))))
 
