@@ -1,9 +1,9 @@
-{:deps    {cheshire/cheshire              {:mvn/version "5.8.1"}
+{:deps    {cheshire/cheshire              {:mvn/version "5.9.0"}
            ch.qos.logback/logback-classic {:mvn/version "1.2.3"}
            http-kit/http-kit              {:mvn/version "2.3.0"}
-           org.clojure/clojure            {:mvn/version "1.10.0"}
+           org.clojure/clojure            {:mvn/version "1.10.1"}
            org.clojure/core.async         {:mvn/version "0.4.500"}
-           org.clojure/tools.logging      {:mvn/version "0.4.1"}
+           org.clojure/tools.logging      {:mvn/version "0.5.0"}
            org.jwat/jwat-warc             {:mvn/version "1.1.1"}
            warc-clojure/warc-clojure      {:mvn/version "0.2.6"}}
  :paths   ["src"]
