@@ -1,3 +1,7 @@
+<a href="http://www.tokenmill.lt">
+      <img src=".github/tokenmill-logo.svg" width="125" height="125" align="right" />
+</a>
+
 # common-crawl-utils
 
 ## Fetcher
@@ -131,3 +135,9 @@ https://index.commoncrawl.org/collinfo.json.
                           0x1b9da111
                           "org.jwat.common.ByteCountingPushBackInputStream@1b9da111"]}
 ```
+
+## License
+
+Copyright &copy; 2019 [TokenMill UAB](http://www.tokenmill.lt).
+
+Distributed under the The Apache License, Version 2.0.
