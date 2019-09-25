@@ -4,6 +4,10 @@
 
 # common-crawl-utils
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![pipeline status](https://gitlab.com/tokenmill/oss/common-crawl-utils/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/common-crawl-utils/pipelines/master/latest)
+[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/common-crawl-utils.svg)](https://clojars.org/lt.tokenmill/common-crawl-utils)
+
 Various [Common Crawl](https://commoncrawl.org/) utilities in Clojure:
 
 - Fetcher of the selected content from the Common Crawl Archive
