@@ -12,6 +12,10 @@
   (get-urls (format "crawl-data/%s/warc.paths.gz" id)))
 
 (defn read-warc
+  "Given an ID of the Crawl returns a sequence of WARC records.
+  ID example: \"CC-MAIN-2019-35\".
+  By default reads WARCs from the latest Crawl.
+  Returns the sequence of the WARC records."
   ([] (read-warc (:id (utils/get-most-recent-crawl))))
   ([id] (->> id (get-warc-urls) (mapcat utils/warc-record-seq))))
 
@@ -26,5 +30,9 @@
                :urlkey urlkey))))
 
 (defn read-coordinates
+  "Given an ID of the Crawl returns a sequence of Common Crawl Coordinates records.
+  ID example: \"CC-MAIN-2019-35\".
+  By default reads coordinates from the latest Crawl.
+  Returns the sequence of the coordinates."
   ([] (read-coordinates (:id (utils/get-most-recent-crawl))))
   ([id] (->> id (get-cdx-urls) (mapcat utils/gzip-line-seq) (map parse-coordinate))))
