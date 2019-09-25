@@ -3,7 +3,6 @@
 target/
 .eastwood
 *.iml
-pom.xml
 pom.xml.asc
 *.jar
 *.class

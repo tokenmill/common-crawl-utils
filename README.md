@@ -4,15 +4,65 @@
 
 # common-crawl-utils
 
-## Fetcher
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![pipeline status](https://gitlab.com/tokenmill/oss/common-crawl-utils/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/common-crawl-utils/pipelines/master/latest)
+[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/common-crawl-utils.svg)](https://clojars.org/lt.tokenmill/common-crawl-utils)
 
-```
-(common-crawl-utils.fetcher/fetch-content {:url "tokenmill.lt"})
+Various [Common Crawl](https://commoncrawl.org/) utilities in Clojure:
+
+- Fetcher of the selected content from the Common Crawl Archive
+- Wrapper on the [Common Crawl Index API](https://index.commoncrawl.org/)
+- Reader for the raw Common Crawl WARC archives
+
+## Selected Content Fetcher
+
+```clojure
+(common-crawl-utils.fetcher/fetch-content 
+  {:cdx-api "https://index.commoncrawl.org/CC-MAIN-2019-09-index" 
+   :url "tokenmill.lt" 
+   :filter ["status:200"]})
+=>
+({:offset "272838009",
+  :content {:warc "WARC/1.0\r
+                   WARC-Type: response\r
+                   WARC-Date: 2019-02-17T12:51:41Z\r
+                   WARC-Record-ID: <urn:uuid:114c36c3-b278-49bf-b4c0-0cf2a0eaac7c>\r
+                   Content-Length: 33486\r
+                   Content-Type: application/http; msgtype=response\r
+                   WARC-Warcinfo-ID: <urn:uuid:64ce1a6d-7cdc-44ec-a802-f4feac213f0c>\r
+                   WARC-Concurrent-To: <urn:uuid:3143fe9c-ec79-4f53-8665-86c668cb46d8>\r
+                   WARC-IP-Address: 79.98.31.5\r
+                   WARC-Target-URI: http://tokenmill.lt/\r
+                   WARC-Payload-Digest: sha1:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS\r
+                   WARC-Block-Digest: sha1:MPJRHAU5WNOIDVX2AZTDOEP2YPXXLC66\r
+                   WARC-Identified-Payload-Type: text/html",
+            :header "HTTP/1.1 200 OK\r
+                     Date: Sun, 17 Feb 2019 12:51:41 GMT\r
+                     Content-Type: text/html;charset=UTF-8\r
+                     X-Crawler-Transfer-Encoding: chunked\r
+                     Server: Jetty(7.x.y-SNAPSHOT)",
+            :html "THE ACTUAL HTML"},
+  :digest "U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS",
+  :mime "text/html",
+  :charset "UTF-8",
+  :mime-detected "text/html",
+  :filename "crawl-data/CC-MAIN-2019-09/segments/1550247481992.39/warc/CC-MAIN-20190217111746-20190217133746-00381.warc.gz",
+  :status "200",
+  :urlkey "lt,tokenmill)/",
+  :url "http://tokenmill.lt/",
+  :length "8548",
+  :languages "eng",
+  :timestamp "20190217125141"})
 ```
 
 Uses [Common Crawl Index API](https://index.commoncrawl.org/) to get
 coordinates to content which is stored on
 [AWS](https://registry.opendata.aws/commoncrawl/).
+
+## Common Crawl Index API Wrapper
+
+Common Crawl Index API wrapper allows to query Common Crawl Index API for
+coordinates into the Common Crawl data. 
 
 ### Constructing Queries
 
@@ -66,45 +116,6 @@ When "cdx-api" keyword is not specified, most recent one is
 used. Currently available index collections can be accessed with
 "*common-crawl-utils.utils/get-crawls*" or can be found at:
 https://index.commoncrawl.org/collinfo.json
-
-### Content
-
-To fetch content for single coordinate:
-
-```
-@(common-crawl-utils.fetcher/fetch-single-coordinate-content {:offset "272838009" :length "8548" :filename "crawl-data/CC-MAIN-2019-09/segments/1550247481992.39/warc/CC-MAIN-20190217111746-20190217133746-00381.warc.gz"})
-=>
-{:offset "272838009",
- :length "8548",
- :filename "crawl-data/CC-MAIN-2019-09/segments/1550247481992.39/warc/CC-MAIN-20190217111746-20190217133746-00381.warc.gz",
- :content {:warc "WARC/1.0\r
-                  WARC-Type: response\r
-                  WARC-Date: 2019-02-17T12:51:41Z\r
-                  WARC-Record-ID: <urn:uuid:114c36c3-b278-49bf-b4c0-0cf2a0eaac7c>\r
-                  Content-Length: 33486\r
-                  Content-Type: application/http; msgtype=response\r
-                  WARC-Warcinfo-ID: <urn:uuid:64ce1a6d-7cdc-44ec-a802-f4feac213f0c>\r
-                  WARC-Concurrent-To: <urn:uuid:3143fe9c-ec79-4f53-8665-86c668cb46d8>\r
-                  WARC-IP-Address: 79.98.31.5\r
-                  WARC-Target-URI: http://tokenmill.lt/\r
-                  WARC-Payload-Digest: sha1:U3FWVBI7XZ2KVBD72MRR7TCHHXSX2FJS\r
-                  WARC-Block-Digest: sha1:MPJRHAU5WNOIDVX2AZTDOEP2YPXXLC66\r
-                  WARC-Identified-Payload-Type: text/html",
-           :header "HTTP/1.1 200 OK\r
-                    Date: Sun, 17 Feb 2019 12:51:41 GMT\r
-                    Content-Type: text/html;charset=UTF-8\r
-                    X-Crawler-Transfer-Encoding: chunked\r
-                    Server: Jetty(7.x.y-SNAPSHOT)",
-           :html "<!DOCTYPE html>
-                  ...
-                  </html>""}}
-```
-
-To fetch coordinates along with their content:
-
-```
-(fetcher/fetch-content {:url "tokenmill.lt" :filter ["status:200"]})
-```
 
 ## Reader
 
