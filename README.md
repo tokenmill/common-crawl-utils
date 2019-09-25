@@ -4,11 +4,10 @@
 
 # common-crawl-utils
 
-Various [Common Crawl](https://commoncrawl.org/) utilities in Clojure.
+Various [Common Crawl](https://commoncrawl.org/) utilities in Clojure:
 
-Utilities:
-- Selected content fetcher from the Common Crawl Archive
-- Clojure Wrapper on the [Common Crawl Index API](https://index.commoncrawl.org/)
+- Fetcher of the selected content from the Common Crawl Archive
+- Wrapper on the [Common Crawl Index API](https://index.commoncrawl.org/)
 - Reader for the raw Common Crawl WARC archives
 
 ## Selected Content Fetcher
