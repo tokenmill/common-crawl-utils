@@ -79,3 +79,9 @@
       (close! coordinate-chan)
       (log/debugf "Closed coordinate channel for query `%s`" (select-keys query cdx-params))))
   coordinate-chan)
+
+(defn get-coordinate-count
+  ([hosts]
+   (get-coordinate-count hosts (:cdx-api (utils/get-most-recent-crawl constants/index-collinfo))))
+  ([hosts cdx-api]
+   (map #(vector % (count (fetch {:url % :matchType "host" :cdx-api cdx-api}))) hosts)))
